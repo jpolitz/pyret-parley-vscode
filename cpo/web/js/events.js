@@ -152,7 +152,6 @@ function makeEvents(config) {
     );
     window.setTimeout(() => {
       replCM().refresh();
-      replCM().setOption("readOnly", "nocursor");
     }, 100);
   }
 

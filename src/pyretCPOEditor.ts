@@ -88,6 +88,9 @@ export class PyretCPOProvider implements vscode.CustomTextEditorProvider {
                             state: JSON.stringify(initialState)
                         },
                     });
+                    webviewPanel.webview.postMessage({
+                        type: 'gainControl'
+                    });
                     break;
                 }
                 case 'change': {
