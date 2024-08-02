@@ -3993,8 +3993,8 @@ $(function () {
     CPO.documents.set("definitions://", CPO.editor.cm.getDoc());
   });
   var pyretLoad = document.createElement('script');
-  console.log("http://localhost:4999/js/cpo-main.jarr");
-  pyretLoad.src = "http://localhost:4999/js/cpo-main.jarr";
+  console.log(window.PYRET);
+  pyretLoad.src = window.PYRET;
   pyretLoad.type = "text/javascript";
   document.body.appendChild(pyretLoad);
   var pyretLoad2 = document.createElement('script');
@@ -4094,12 +4094,20 @@ $(function () {
     window.stickRichMessage(message);
     localSettings.setItem("sawSummer2021Message", "saw-summer-2021-message");
   }
-  if (window.parent !== window) {
+  if (window.parent !== window && window.parent !== undefined) {
     makeEvents({
       CPO: CPO,
       sendPort: window.parent,
       receivePort: window
     });
+  }
+  if (typeof acquireVsCodeApi === "function") {
+    makeEvents({
+      CPO: CPO,
+      sendPort: acquireVsCodeApi(),
+      receivePort: window
+    });
+
   }
 });
 })();
