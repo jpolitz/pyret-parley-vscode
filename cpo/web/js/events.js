@@ -251,7 +251,7 @@ function makeEvents(config) {
         return;
       }
       // This means we got a CPO link as the initial state.
-      if(message.state.startsWith(APP_BASE_URL) || message.state.startsWith("https://code.pyret.org")) {
+      if((typeof APP_BASE_URL === 'string' && APP_BASE_URL !== "" && message.state.startsWith(APP_BASE_URL)) || message.state.startsWith("https://code.pyret.org")) {
         resetFromShare(message.state);
         return;
       }

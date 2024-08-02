@@ -71,14 +71,39 @@ export class PyretCPOProvider implements vscode.CustomTextEditorProvider {
 
 		// Receive message from the webview.
 		webviewPanel.webview.onDidReceiveMessage(e => {
-			switch (e.type) {
+            if(e.protocol !== 'pyret') { console.warn("Non-pyret message: ", e); return; }
+            const initialState = {
+                            definitionsAtLastRun: false,
+                            interactionsSinceLastRun: [],
+                            editorContents: document.getText(),
+                            replContents: "",
+                        };
+			switch (e.data.type) {
                 case 'pyret-init': {
                     console.log("Got init", e);
                     webviewPanel.webview.postMessage({
                         protocol: 'pyret',
-                        type: 'setContents',
-                        text: document.getText()
+                        data: {
+                            type: 'reset',
+                            state: JSON.stringify(initialState)
+                        },
                     });
+                    break;
+                }
+                case 'change': {
+                    console.log("Got change", e);
+                    const edit = new vscode.WorkspaceEdit();
+
+                    // Just replace the entire document every time for this example extension.
+                    // A more complete extension should compute minimal edits instead.
+                    // NOTE(joe): we have these on the change events from CodeMirror
+                    edit.replace(
+                        document.uri,
+                        new vscode.Range(0, 0, document.lineCount, 0),
+                        e.state.editorContents)
+                    vscode.workspace.applyEdit(edit);
+                    document.save();
+                    break;
                 }
                 default: console.log("Got a message: ", e);
 			}
