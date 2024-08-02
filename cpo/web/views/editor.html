@@ -3,8 +3,7 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>code.pyret.org</title>
-  <link rel="preload" href="${pyretUrl}" as="script">
-  <script>window.PYRET = "${pyretUrl}";</script>
+  <link rel="preload" href="{{&PYRET}}" as="script">
   <link rel="stylesheet" href="/css/reset.css" />
   <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:400,700" />
@@ -24,7 +23,7 @@
   <link rel="stylesheet" href="/css/themes/high-contrast-dark.css" />
   <link rel="icon" type="image/png" href="/img/pyret-icon.png" />
   <style id="highlight-styles"></style>
-  <script>var APP_LOG_URL = ""</script>
+  <script>var APP_LOG_URL = "{{{ LOG_URL }}}";</script>
   <script src="/js/localSettings.js"></script>
 </head>
 <body class="default">
@@ -434,9 +433,9 @@
 
 
 <script>
-var LOG_URL = "";
-var GIT_REV = "";
-var GIT_BRANCH = "";
+var LOG_URL = "{{ &LOG_URL }}";
+var GIT_REV = "{{ &GIT_REV }}";
+var GIT_BRANCH = "{{ &GIT_BRANCH }}";
 </script>
 
 <script src="/js/es6-shim.js"></script>
@@ -446,8 +445,8 @@ var GIT_BRANCH = "";
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script>
-var apiKey = "";
-var appId = "";
+var apiKey = "{{ GOOGLE_API_KEY }}";
+var appId = "{{ GOOGLE_APP_ID }}";
 function handleGoogLoad() {
   handleClientLoad(apiKey);
 }
@@ -456,11 +455,22 @@ function handleGoogLoad() {
 <!-- GAPI Client -->
 <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleGoogLoad"></script>
 <script>
-var POSTMESSAGE_ORIGIN = "";
+var POSTMESSAGE_ORIGIN = "{{{ POSTMESSAGE_ORIGIN }}}";
 console.log(window.performance.now());
 </script>
-<script src="js/events.js"></script>
 <script src="js/beforePyret.js"></script>
+<script>
+var APP_BASE_URL = "{{{ BASE_URL }}}";
+var CSRF_TOKEN = "{{{ CSRF_TOKEN }}}";
+$.ajaxPrefilter(function (options, originalOptions, jqXHR) {
+  var a = document.createElement("a");
+  a.href = options.url;
+  if(a.origin === APP_BASE_URL) {
+    jqXHR.setRequestHeader('X-CSRF-Token', CSRF_TOKEN);
+  }
+});
+</script>
+<script src="js/events.js"></script>
 
   </main>
 </body>

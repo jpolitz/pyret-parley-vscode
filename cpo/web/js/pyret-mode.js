@@ -9,7 +9,7 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
     };
   }
 
-  const pyret_ident_regex = new RegExp("^[a-zA-Z_][a-zA-Z0-9$_\\-]*");
+  const pyret_ident_regex = new RegExp("^[a-zA-Z_][a-zA-Z0-9_-]*");
   const pyret_closing_keywords = ["end"];
   const pyret_closing_builtins = [];
   const pyret_closing_tokens =
@@ -36,7 +36,7 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
   const pyret_booleans = wordRegexp(["true", "false"]);
   const pyret_keywords_hyphen =
     wordRegexp(["type-let", "does-not-raise", "raises-violates",
-                "raises-satisfies", "raises-other-than", "is-roughly", "is-not==", "is-not=~", "is-not<=>", "is-not"]);
+                "raises-satisfies", "raises-other-than", "is-roughly", "is-not-roughly", "is-not==", "is-not=~", "is-not<=>", "is-not"]);
   const pyret_keywords_colon =
     wordRegexp(pyret_opening_keywords_colon.concat(["doc", "otherwise", "then", "with", "sharing", "where", "do", "row", "source"]));
   const pyret_single_punctuation =
@@ -49,7 +49,7 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
                               ">": true, ">=": true, "==": true, "<>": true, ".": true, "^": true,
                               "<=>": true, "=~": true,
                               "is": true, "is==": true, "is=~": true, "is<=>": true, "because": true,
-                              "is-roughly": true, "is-not": true, "is-not==": true, "is-not=~": true, "is-not<=>": true,
+                              "is-roughly": true, "is-not": true, "is-not-roughly": true, "is-not==": true, "is-not=~": true, "is-not<=>": true,
                               "satisfies": true, "violates": true, "raises": true, "raises-other-than": true,
                               "does-not-raise": true, "raises-satisfies": true, "raises-violates": true
                             };
@@ -133,18 +133,6 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
     else if (stream.match(badNumber))
       return ret(state, 'number', stream.current(), 'bad-number');
 
-    // if (ch === '"') {
-    //   state.tokenizer = tokenStringDouble;
-    //   state.lastToken = '"';
-    //   stream.eat('"');
-    //   return state.tokenizer(stream, state);
-    // }
-    // if (ch === "'") {
-    //   state.tokenizer = tokenStringSingle;
-    //   state.lastToken = "'";
-    //   stream.eat("'");
-    //   return state.tokenizer(stream, state);
-    // }
     const dquot_str =
       new RegExp("^\"(?:" +
                  "\\\\[01234567]{1,3}" +
@@ -222,26 +210,6 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
     return null;
   }
 
-  function mkTokenString(singleOrDouble) {
-    return function(stream, state) {
-      var insideRE = singleOrDouble === "'" ? new RegExp("[^'\\]") : new RegExp('[^"\\]');
-      var endRE = singleOrDouble === "'" ? new RegExp("'") : new RegExp('"');
-      while (!stream.eol()) {
-        stream.eatWhile(insideRE);
-        if (stream.eat('\\')) {
-          stream.next();
-          if (stream.eol())
-            return ret(state, 'string', stream.current(), 'string');
-        } else if (stream.eat(singleOrDouble)) {
-          state.tokenizer = tokenBase;
-          return ret(state, 'string', stream.current(), 'string');
-        } else
-          stream.eat(endRE);
-      }
-      return ret(state, 'string', stream.current(), 'string');
-    };
-  }
-
   function tokenizeBlockComment(stream, state) {
     if (stream.match('#|', true)) {
       state.commentNestingDepth++;
@@ -255,9 +223,6 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
       return ret(state, "COMMENT", state.lastContent, 'comment');
     }
   }
-
-  var tokenStringDouble = mkTokenString('"');
-  var tokenStringSingle = mkTokenString("'");
 
   function tokenStringTriple(stream, state) {
     while (!stream.eol()) {

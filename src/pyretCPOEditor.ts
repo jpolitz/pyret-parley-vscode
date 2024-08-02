@@ -45,7 +45,7 @@ export class PyretCPOProvider implements vscode.CustomTextEditorProvider {
 
 		function updateWebview() {
 			webviewPanel.webview.postMessage({
-				type: 'update',
+				type: 'setContents',
 				text: document.getText(),
 			});
 		}
@@ -73,9 +73,12 @@ export class PyretCPOProvider implements vscode.CustomTextEditorProvider {
 		webviewPanel.webview.onDidReceiveMessage(e => {
 			switch (e.type) {
                 case 'pyret-init': {
+                    console.log("Got init", e);
                     webviewPanel.webview.postMessage({
-                        protocol: 'pyret-init',
-                    })
+                        protocol: 'pyret',
+                        type: 'setContents',
+                        text: document.getText()
+                    });
                 }
                 default: console.log("Got a message: ", e);
 			}

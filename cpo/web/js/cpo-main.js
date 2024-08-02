@@ -322,11 +322,12 @@
 
       // NOTE(joe): assigned on window for debuggability
       window.RUN_CODE = CPO.RUN_CODE = function(src) {
-        doRunAction(src, true);
+        return doRunAction(src, true);
       };
       window.RUN_INTERACTION = CPO.RUN_INTERACTION = function(src) {
         return replWidget.runner(src, true);
       };
+      window.replWidget = CPO.replWidget = replWidget;
 
       /*
       $("#runDropdown").click(function() {
@@ -384,11 +385,9 @@
         }
         switch (currentAction) {
           case "run":
-            replWidget.runCode(src, {check: true, cm: editor.cm});
-            break;
+            return replWidget.runCode(src, {check: true, cm: editor.cm});
           case "tc-and-run":
-            replWidget.runCode(src, {check: true, cm: editor.cm, "type-check": true});
-            break;
+            return replWidget.runCode(src, {check: true, cm: editor.cm, "type-check": true});
         }
       }
 
