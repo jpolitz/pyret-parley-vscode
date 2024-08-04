@@ -53,7 +53,8 @@ export class PyretCPOProvider implements vscode.CustomTextEditorProvider {
                 }
             },
             'path': {
-                'join': path.join
+                'join': path.join,
+                'resolve': path.resolve
             },
             'process': {
                 'cwd': () => process.cwd()
