@@ -1,4 +1,8 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
+
+
 
 export function getNonce() {
 	let text = '';
@@ -37,6 +41,25 @@ export class PyretCPOProvider implements vscode.CustomTextEditorProvider {
 		webviewPanel: vscode.WebviewPanel,
 		_token: vscode.CancellationToken
 	): Promise<void> {
+        const knownModules = {
+            'fs': {
+                'readFileSync': (p : string, options: any) => {
+                    const actualCwd = path.dirname(document.uri.fsPath);
+                    const resolved = path.resolve(actualCwd, p);
+                    if(!resolved.startsWith(path.dirname(document.uri.fsPath))) {
+                        throw new Error(`Bad path outside of current directory: ${resolved} ${actualCwd}`);
+                    }
+                    return String(fs.readFileSync(resolved, options));
+                }
+            },
+            'path': {
+                'join': path.join
+            },
+            'process': {
+                'cwd': () => process.cwd()
+            }
+        }
+
 		// Setup initial content for the webview
 		webviewPanel.webview.options = {
 			enableScripts: true,
@@ -69,8 +92,35 @@ export class PyretCPOProvider implements vscode.CustomTextEditorProvider {
 			changeDocumentSubscription.dispose();
 		});
 
+        function sendRpcResponse(data: { callbackId: string }, result : any) {
+            webviewPanel.webview.postMessage({
+                protocol: 'pyret-rpc',
+                data: {
+                    type: 'rpc-response',
+                    callbackId: data.callbackId,
+                    result: result
+                }
+            });
+        }
+
 		// Receive message from the webview.
 		webviewPanel.webview.onDidReceiveMessage(e => {
+            if(e.protocol === 'pyret-rpc') {
+                /**
+                 * data: { module: string, method: string, args: string[], callbackId: string }
+                 * 
+                 * { type: 'rpc', module: 'fs', method: 'readFileSync', args: ['path/to/file'], callbackId: 'some-id' }
+                 */
+                const module = (knownModules as any)[e.data.module];
+                if(!(module as any)[e.data.method]) {
+                    sendRpcResponse(e.data, { error: "Unknown method" });
+                }
+                else {
+                    const result = (module as any)[e.data.method](...e.data.args);
+                    sendRpcResponse(e.data, result);
+                }
+                return;
+            }
             if(e.protocol !== 'pyret') { console.warn("Non-pyret message: ", e); return; }
             const initialState = {
                             definitionsAtLastRun: false,
@@ -149,7 +199,8 @@ export class PyretCPOProvider implements vscode.CustomTextEditorProvider {
         const events = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'cpo', 'web', 'js', 'events.js'));
         const beforePyret = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'cpo', 'web', 'js', 'beforePyret.js'));
 
-
+        const pyretLogo = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'cpo', 'web', 'img', 'pyret-logo.png'));
+        const pyretIcon = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'cpo', 'web', 'img', 'pyret-icon.png'));
 
         // NOTE(joe): This I copied from a built index.html, lightly edited
 
@@ -164,7 +215,7 @@ export class PyretCPOProvider implements vscode.CustomTextEditorProvider {
   <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:400,700" />
   ${stylesheetImports}
-  <link rel="icon" type="image/png" href="/img/pyret-icon.png" />
+  <link rel="icon" type="image/png" href="${pyretIcon}" />
   <style id="highlight-styles"></style>
   <script>var APP_LOG_URL = "";</script>
   <script src="${localSettings}"></script>
@@ -239,7 +290,7 @@ export class PyretCPOProvider implements vscode.CustomTextEditorProvider {
                     tabindex="-1"
                     class="blueButton focusable">
               <span>▾</span>
-              <img class="logo" src="/img/pyret-logo.png" />
+              <img class="logo" src="${pyretLogo}" />
             </button>
           </div>
           <ul id="bonniemenuContents" class="menuContents submenu" role="menu" aria-hidden="true"
