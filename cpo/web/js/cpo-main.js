@@ -104,7 +104,6 @@
     var gtf = function(m, f) { return gf(m, "types")[f]; };
 
     var constructors = gdriveLocators.makeLocatorConstructors(storageAPI, runtime, compileLib, compileStructs, parsePyret, builtinModules, cpo);
-    var fileLocator = fileLocator.makeFileLocatorConstructor(window.MESSAGES.sendRpc, runtime, compileLib, compileStructs, parsePyret, builtinModules, cpo);
 
     // NOTE(joe): In order to yield control quickly, this doesn't pause the
     // stack in order to save.  It simply sends the save requests and
@@ -153,6 +152,10 @@
               return "gdrive-js://" + arr[1];
             }
             else if (protocol === "file") {
+              if(!window.MESSAGES) {
+                console.error("Unknown import: ", dependency);
+                return protocol + "://" + arr.join(":");
+              }
               return runtime.pauseStack((restarter) => {
                 const realpath = window.MESSAGES.sendRpc('path', 'resolve', [arr[0]]);
                 realpath.then((realpath) => {
@@ -201,8 +204,9 @@
                 else if (protocol === "gdrive-js") {
                   return constructors.makeGDriveJSLocator(arr[0], arr[1]);
                 }
-                else if (protocol === "file") {
-                  return fileLocator.makeFileLocator(arr[0]);
+                else if (protocol === "file" && window.MESSAGES) {
+                  var fileLocatorConstructor = fileLocator.makeFileLocatorConstructor(window.MESSAGES.sendRpc, runtime, compileLib, compileStructs, parsePyret, builtinModules, cpo);
+                  return fileLocatorConstructor.makeFileLocator(arr[0]);
                 }
                 /*
                 else if (protocol === "js-http") {
@@ -333,12 +337,22 @@
             runDropdown: $('#runDropdown')
           });
 
-      // NOTE(joe): assigned on window for debuggability
-      window.RUN_CODE = CPO.RUN_CODE = function(src) {
-        return doRunAction(src, true);
+      // NOTE(joe): assigned on window for embedding API in events.js, and for debugging
+      // NOTE(joe): Some of the CPO internals use Q promises. The withResolvers pattern
+      // promotes these to real JS promises that will work with e.g. async functions.
+      window.RUN_CODE = CPO.RUN_CODE = async function(src) {
+        const result = doRunAction(src, true);
+        const { promise, resolve, reject } = Promise.withResolvers();
+        result.then(resolve);
+        result.catch(reject);
+        return promise;
       };
-      window.RUN_INTERACTION = CPO.RUN_INTERACTION = function(src) {
-        return replWidget.runner(src, true);
+      window.RUN_INTERACTION = CPO.RUN_INTERACTION = async function(src) {
+        const result = replWidget.runner(src, true);
+        const { promise, resolve, reject } = Promise.withResolvers();
+        result.then(resolve);
+        result.catch(reject);
+        return promise;
       };
       window.replWidget = CPO.replWidget = replWidget;
 

@@ -5,10 +5,12 @@ window.storageAPI = storageAPIDeferred.promise;
 window.sheetsAPI = sheetsAPIDeferred.promise;
 
 window.handleClientLoad = function handleClientLoad(apiKey) {
+  debugger;
   if(!gapi || !gapi.client) {
     storageAPIDeferred.reject("no gapi.client");
     sheetsAPIDeferred.reject("no gapi.client");
-    console.log("Not logged in; proceeding without login info", err);
+    console.log("Not logged in; proceeding without login info");
+    return;
   }
   gapi.client.setApiKey(apiKey);
   var api = createProgramCollectionAPI("code.pyret.org", true);
