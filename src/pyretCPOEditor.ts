@@ -192,7 +192,6 @@ export class PyretCPOProvider implements vscode.CustomTextEditorProvider {
         const pyret = document.getElementById('pyret');
         const vscode = acquireVsCodeApi();
         window.addEventListener('message', (e) => {
-        debugger;
           if(e.origin !== 'https://pyret-vmt-dfb765867402.herokuapp.com') {
             pyret.contentWindow.postMessage(e.data, "*");
           }
