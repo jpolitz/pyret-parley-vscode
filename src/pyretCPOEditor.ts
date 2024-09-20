@@ -125,10 +125,12 @@ export class PyretCPOProvider implements vscode.CustomTextEditorProvider {
         return;
       }
       if (e.protocol !== 'pyret') { console.warn("Non-pyret message: ", e); return; }
+      let doctext = document.getText();
+      if(doctext === "") { doctext = "use context starter2024\n\n"; }
       const initialState = {
         definitionsAtLastRun: false,
         interactionsSinceLastRun: [],
-        editorContents: document.getText(),
+        editorContents: doctext,
         replContents: "",
       };
       switch (e.data.type) {
